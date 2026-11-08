@@ -1,0 +1,53 @@
+{
+    "name": "gene/gene",
+    "description": "Générateur d'applications CRUD PHP à partir d'un schéma MySQL/MariaDB",
+    "type": "project",
+    "license": "proprietary",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.3",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "symfony/console": "^7.4",
+        "twig/twig": "^3.30"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gene\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gene\\Tests\\": "tests/",
+            "App\\": "resources/skeleton/src/"
+        }
+    },
+    "bin": [
+        "bin/gene"
+    ],
+    "config": {
+        "platform": {
+            "php": "8.3.0"
+        },
+        "sort-packages": true
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.3",
+        "phpunit/phpunit": "^12.5"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --exclude-group integration",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "check": [
+            "@cs",
+            "@stan",
+            "@test:unit"
+        ]
+    }
+}

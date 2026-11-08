@@ -1,0 +1,87 @@
+{% import 'views/_form_macros.twig' as m -%}
+<?php
+/**
+ * Formulaire « {{ t.name|comment }} » (création et modification). Généré par gene.
+ *
+ * @var App\Framework\View $this
+ * @var array<string, string> $values saisie à afficher
+ * @var array<string, string> $errors erreurs par champ (« _form » : erreur générale)
+ * @var array<string, array<string, string>> $options choix des clés étrangères
+ * @var string|null $id null en création
+ * @var string $path
+ */
+$isNew = $id === null;
+$this->title(($isNew ? 'Nouveau' : 'Modifier') . ' · ' . {{ t.title|php }});
+$action = $isNew ? $this->url($path) : $this->url($path . '/' . rawurlencode($id));
+$cancel = $isNew ? $this->url($path) : $this->url($path . '/' . rawurlencode($id));
+?>
+<nav aria-label="Fil d'Ariane">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="<?= $this->e($this->url($path)) ?>">{{ t.title|html }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><?= $isNew ? 'Nouveau' : 'Modifier' ?></li>
+    </ol>
+</nav>
+
+<?php if (isset($errors['_form'])): ?>
+    <div class="alert alert-danger" role="alert"><?= $this->e($errors['_form']) ?></div>
+<?php elseif ($errors !== []): ?>
+    <div class="alert alert-danger" role="alert">Le formulaire contient des erreurs : corrigez les champs signalés.</div>
+<?php endif ?>
+
+<form method="post" action="<?= $this->e($action) ?>" class="card">
+    <div class="card-body">
+        <?= $this->csrfField() ?>
+{% for f in t.formFields %}
+{% set input = f.input %}
+
+{% if input == 'bool' %}
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="{{ m.cls(f, 'form-check-input') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="1"<?= ($values[{{ f.name|php }}] ?? '') === '1' ? ' checked' : '' ?>>
+            <label class="form-check-label" for="{{ f.inputId|html }}">{{ f.label|html }}</label>
+{{ m.feedback(f) }}
+        </div>
+{% else %}
+        <div class="mb-3">
+            <label class="form-label" for="{{ f.inputId|html }}">{{ f.label|html }}{% if f.isRequired %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</label>
+{% if input == 'select' %}
+            <select class="{{ m.cls(f, 'form-select') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}"{{ m.attrs(f) }}>
+                <option value="">— Choisir —</option>
+                <?php foreach ($options[{{ f.name|php }}] ?? [] as $optionValue => $optionLabel): ?>
+                    <option value="<?= $this->e($optionValue) ?>"<?= (string) $optionValue === ($values[{{ f.name|php }}] ?? '') ? ' selected' : '' ?>><?= $this->e($optionLabel) ?></option>
+                <?php endforeach ?>
+            </select>
+{% elseif input == 'enum' %}
+            <select class="{{ m.cls(f, 'form-select') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}"{{ m.attrs(f) }}>
+                <option value="">— Choisir —</option>
+                <?php foreach ({{ f.column.enumValues|php }} as $choice): ?>
+                    <option value="<?= $this->e($choice) ?>"<?= $choice === ($values[{{ f.name|php }}] ?? '') ? ' selected' : '' ?>><?= $this->e($choice) ?></option>
+                <?php endforeach ?>
+            </select>
+{% elseif input == 'textarea' %}
+            <textarea class="{{ m.cls(f, 'form-control' ~ (f.kind == 'json' ? ' font-monospace' : '')) }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" rows="4"{{ m.attrs(f) }}>{{ m.value(f) }}</textarea>
+{% elseif input == 'number' %}
+{% set range = f.integerRange %}
+            <input type="number" step="1"{% if range %} min="{{ range[0] }}" max="{{ range[1] }}"{% endif %} class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% elseif input == 'year' %}
+            <input type="number" min="1901" max="2155" step="1" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% elseif input == 'decimal' %}
+            <input type="text" inputmode="decimal" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% elseif input == 'date' %}
+            <input type="date" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% elseif input == 'datetime' %}
+            <input type="datetime-local" step="1" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% elseif input == 'time' %}
+            <input type="time" step="1" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{{ m.attrs(f) }}>
+{% else %}
+            <input type="text" class="{{ m.cls(f, 'form-control') }}" id="{{ f.inputId|html }}" name="{{ f.name|html }}" value="{{ m.value(f) }}"{% if f.column.maxLength %} maxlength="{{ f.column.maxLength }}"{% endif %}{{ m.attrs(f) }}>
+{% endif %}
+{{ m.feedback(f) }}
+        </div>
+{% endif %}
+{% endfor %}
+    </div>
+    <div class="card-footer d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="<?= $this->e($cancel) ?>">Annuler</a>
+    </div>
+</form>

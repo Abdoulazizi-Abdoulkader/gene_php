@@ -1,0 +1,10 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - resources/skeleton/src
+        - resources/skeleton/config
+        - public/index.php
+        - tests
+    excludePaths:
+        - tests/Snapshot/expected

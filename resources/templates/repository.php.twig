@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repository;
+
+use App\Entity;
+
+/**
+ * Accès à la table « {{ t.name|comment }} ». Les requêtes sont dans App\Framework\Repository ;
+ * ajoutez ici vos requêtes spécifiques.
+ *
+{{ include('_header.twig') }} *
+ * @extends \App\Framework\Repository<Entity\{{ t.className }}>
+ */
+final class {{ t.className }}Repository extends \App\Framework\Repository
+{
+    protected const TABLE = {{ t.name|php }};
+    protected const PRIMARY_KEY = {{ t.primaryKey ? t.primaryKey.name|php : 'null' }};
+    protected const AUTO_INCREMENT = {{ t.autoIncrement ? 'true' : 'false' }};
+    protected const COLUMNS = {{ t.columnNames|php(1) }};
+    protected const WRITABLE = {{ t.writableColumns|php(1) }};
+    protected const KEEP_IF_NULL = {{ t.keepIfNullColumns|php(1) }};
+    protected const RELATIONS = {{ t.relationConstant|php(1) }};
+    protected const LABEL_COLUMN = {{ t.labelField.name|php }};
+    protected const SEARCHABLE = {{ t.searchableColumns|php(1) }};
+
+    protected function entityClass(): string
+    {
+        return Entity\{{ t.className }}::class;
+    }
+}

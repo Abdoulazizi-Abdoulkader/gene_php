@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Entity;
+
+/**
+ * Enregistrement de la table « {{ t.name|comment }} ».
+ *
+{{ include('_header.twig') }} */
+final class {{ t.className }} implements \App\Framework\Entity
+{
+    /** Champs saisissables : libellé, type, contraintes. Lu par App\Framework\Form pour valider. */
+    public const FIELDS = {{ t.fieldSpecs|php(1) }};
+{% for f in t.fields %}
+
+    /** {{ f.column.name|comment }} : {{ f.column.sqlType|comment }}{{ f.column.nullable ? ', NULL' : '' }}{{ f.column.primary ? ', clé primaire' : '' }}{{ f.relation ? ', → ' ~ f.relation.table|comment : '' }} */
+    public ?{{ f.phpType }} ${{ f.property }} = null;
+{% endfor %}
+
+    public static function fromRow(array $row): static
+    {
+        $entity = new self();
+{% for f in t.fields %}
+        $entity->{{ f.property }} = {{ f.castExpression }};
+{% endfor %}
+
+        return $entity;
+    }
+
+    public function toRow(): array
+    {
+        return [
+{% for f in t.fields %}
+            {{ f.name|php }} => $this->{{ f.property }},
+{% endfor %}
+        ];
+    }
+}

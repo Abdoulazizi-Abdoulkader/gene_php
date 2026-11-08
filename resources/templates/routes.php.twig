@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Controller;
+use App\Framework\Router;
+
+/*
+ * Routes générées par gene : ne modifiez pas ce fichier, il est régénéré avec le schéma.
+ * Vos routes vont dans routes.custom.php (lues en premier : elles peuvent aussi remplacer celles-ci).
+ */
+return static function (Router $router): void {
+    (require __DIR__ . '/routes.custom.php')($router);
+
+    $router->get('/', [Controller\HomeController::class, 'index']);
+{% for t in entities %}
+    $router->crud({{ t.path|php }}, Controller\{{ t.className }}Controller::class{{ t.readOnly ? ', readOnly: true' : '' }});
+{% endfor %}
+};

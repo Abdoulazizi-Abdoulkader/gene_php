@@ -1,0 +1,64 @@
+# Demo
+
+Application CRUD générée par **gene** à partir de la base gene\_test (4 table(s)).
+
+## Démarrage
+
+Prérequis : PHP 8.3 ou plus, avec les extensions `pdo_mysql` et `mbstring`.
+
+1. Renseignez `DB_PASSWORD` dans `.env` (gene n'écrit jamais de mot de passe). Le modèle est dans `.env.example`.
+2. Lancez le serveur de développement :
+
+   ```bash
+   php -S localhost:8080 -t public
+   ```
+
+3. Ouvrez <http://localhost:8080>.
+
+Composer n'est pas nécessaire pour faire tourner l'application : un chargeur de classes de secours est intégré.
+Si vous ajoutez des dépendances, lancez `composer install`.
+
+## Déploiement Apache
+
+- **Recommandé** : faites pointer le `DocumentRoot` (ou l'alias) sur `public/`.
+- **Sinon** : le `.htaccess` de la racine renvoie tout vers `public/`, ce qui rend `src/`, `config/` et `.env` inaccessibles.
+  `mod_rewrite` doit être actif et `AllowOverride All` autorisé.
+
+Si les liens générés sont faux (proxy, alias particulier), fixez le préfixe avec `APP_BASE_PATH` dans `.env`.
+
+En production : `APP_ENV=prod` et `APP_DEBUG=0`.
+
+## Organisation
+
+| Dossier | Rôle |
+| --- | --- |
+| `public/` | contrôleur frontal `index.php` et fichiers statiques (Bootstrap 5.3) |
+| `config/` | `routes.custom.php` et `menu.custom.php` (vos ajouts), `routes.php` et `menu.php` (générés, ne pas modifier), `config.php` (environnement) |
+| `src/Entity/` | une classe par table, propriétés typées et description des champs (`FIELDS`) |
+| `src/Repository/` | accès aux données ; les requêtes communes sont dans `src/Framework/Repository.php` |
+| `src/Controller/` | actions : liste, fiche, création, modification, suppression |
+| `templates/` | gabarits PHP ; `$this->e()` échappe toute valeur affichée |
+| `src/Framework/` | mini-framework : routeur, vues, sessions, CSRF, validation |
+
+## Sécurité intégrée
+
+- Requêtes préparées partout ; les noms de tables et de colonnes viennent du code généré, jamais de la saisie.
+- Jeton CSRF vérifié sur toute requête POST (création, modification, suppression).
+- Échappement HTML systématique dans les gabarits, politique CSP stricte (aucun script en ligne).
+- Cookies de session `HttpOnly`, `SameSite=Lax`, mode strict.
+- Aucune authentification n'est générée : protégez l'application (VPN, authentification HTTP, ou ajoutez la vôtre)
+  avant de l'exposer.
+
+## Tables
+
+| Table | URL | Mode |
+| --- | --- | --- |
+| client | /client | CRUD complet |
+| commande | /commande | CRUD complet |
+| ligne\_commande | /ligne\-commande | liste seule (clé primaire composite) |
+| pays | /pays | CRUD complet |
+
+## Régénérer
+
+Après une évolution du schéma, relancez gene vers le même dossier. Les fichiers que vous avez modifiés sont
+**conservés** (gene compare leur empreinte à celle notée dans `.gene.json`). `--force` écrase tout.

@@ -1,0 +1,7 @@
+# Toute URL qui ne désigne pas un fichier existant est confiée au contrôleur frontal.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+Options -Indexes

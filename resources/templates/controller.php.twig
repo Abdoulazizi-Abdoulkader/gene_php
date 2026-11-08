@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controller;
+
+use App\Entity;
+use App\Framework;
+use App\Repository;
+
+/**
+ * {{ t.readOnly ? 'Liste' : 'CRUD' }} de la table « {{ t.name|comment }} ».
+ *
+{{ include('_header.twig') }} */
+final class {{ t.className }}Controller extends Framework\Controller
+{
+    private const PATH = {{ t.path|php }};
+
+    private readonly Repository\{{ t.className }}Repository $repository;
+{% for r in t.readOnly ? [] : t.relatedRepositories %}
+{% if r.className != t.className %}
+    private readonly Repository\{{ r.className }}Repository ${{ r.repositoryProperty }};
+{% endif %}
+{% endfor %}
+
+    public function __construct(Framework\App $app)
+    {
+        parent::__construct($app);
+        $this->repository = new Repository\{{ t.className }}Repository($app->pdo());
+{% for r in t.readOnly ? [] : t.relatedRepositories %}
+{% if r.className != t.className %}
+        $this->{{ r.repositoryProperty }} = new Repository\{{ r.className }}Repository($app->pdo());
+{% endif %}
+{% endfor %}
+    }
+
+    public function index(): Framework\Response
+    {
+        $request = $this->request();
+        $page = $this->repository->paginate(
+            $request->queryInt('page', 1),
+            (int) $this->app->config->get('app.per_page', 20),
+            $request->query('sort'),
+            $request->query('dir') ?? 'asc',
+            $request->query('q') ?? '',
+        );
+
+        return $this->render({{ (t.slug ~ '/index')|php }}, ['page' => $page, 'path' => self::PATH]);
+    }
+{% if not t.readOnly %}
+{% set pk = t.primaryKey %}
+{% set entity = 'Entity\\' ~ t.className %}
+
+    public function show(string $id): Framework\Response
+    {
+        $item = $this->repository->find($id) ?? $this->notFound();
+
+        return $this->render({{ (t.slug ~ '/show')|php }}, [
+            'item' => $item,
+            'path' => self::PATH,
+            'labels' => [
+{% for r in t.relations %}
+{% set f = t.fields|filter(x => x.name == r.column)|first %}
+                {{ r.column|php }} => $item->{{ f.property }} === null ? null : {{ r.className == t.className ? '$this->repository' : '$this->' ~ r.repositoryProperty }}->labelFor($item->{{ f.property }}),
+{% endfor %}
+            ],
+        ]);
+    }
+
+    public function create(): Framework\Response
+    {
+        return $this->form(Framework\Form::defaults({{ entity }}::FIELDS), [], null);
+    }
+
+    public function store(): Framework\Response
+    {
+        $result = Framework\Form::validate($this->request()->postAll(), {{ entity }}::FIELDS);
+        if (!$result->isValid()) {
+            return $this->form($result->raw, $result->errors, null, 422);
+        }
+
+        try {
+            $id = $this->repository->insert({{ entity }}::fromRow($result->values));
+        } catch (\PDOException $e) {
+            // Erreur due aux données (doublon, valeur hors limites…) : message dans le formulaire.
+            return $this->form($result->raw, ['_form' => Framework\Database::userMessage($e) ?? throw $e], null, 422);
+        }
+
+        $this->flash('success', 'Enregistrement créé.');
+
+        return $this->redirect($id === null ? self::PATH : self::PATH . '/' . rawurlencode($id));
+    }
+
+    public function edit(string $id): Framework\Response
+    {
+        $item = $this->repository->find($id) ?? $this->notFound();
+
+        return $this->form(Framework\Form::fromRow($item->toRow(), {{ entity }}::FIELDS), [], $id);
+    }
+
+    public function update(string $id): Framework\Response
+    {
+        $item = $this->repository->find($id) ?? $this->notFound();
+        $result = Framework\Form::validate($this->request()->postAll(), {{ entity }}::FIELDS);
+        if (!$result->isValid()) {
+            return $this->form($result->raw, $result->errors, $id, 422);
+        }
+
+        $updated = {{ entity }}::fromRow([...$item->toRow(), ...$result->values]);
+        try {
+            $this->repository->update($id, $updated);
+        } catch (\PDOException $e) {
+            return $this->form($result->raw, ['_form' => Framework\Database::userMessage($e) ?? throw $e], $id, 422);
+        }
+
+        $this->flash('success', 'Modifications enregistrées.');
+
+        return $this->redirect(self::PATH . '/' . rawurlencode((string) ($updated->{{ pk.property }} ?? $id)));
+    }
+
+    public function destroy(string $id): Framework\Response
+    {
+        $this->repository->find($id) ?? $this->notFound();
+
+        try {
+            $this->repository->delete($id);
+        } catch (\PDOException $e) {
+            if (!Framework\Database::isConstraintViolation($e)) {
+                throw $e;
+            }
+            $this->flash('danger', 'Suppression impossible : cet enregistrement est utilisé par d\'autres données.');
+
+            return $this->redirect(self::PATH . '/' . rawurlencode($id));
+        }
+
+        $this->flash('success', 'Enregistrement supprimé.');
+
+        return $this->redirect(self::PATH);
+    }
+
+    /**
+     * @param array<string, string> $values
+     * @param array<string, string> $errors
+     */
+    private function form(array $values, array $errors, ?string $id, int $status = 200): Framework\Response
+    {
+        return $this->render({{ (t.slug ~ '/form')|php }}, [
+            'values' => $values,
+            'errors' => $errors,
+            'id' => $id,
+            'path' => self::PATH,
+            'options' => [
+{% for r in t.relations %}
+                {{ r.column|php }} => {{ r.className == t.className ? '$this->repository' : '$this->' ~ r.repositoryProperty }}->options($values[{{ r.column|php }}] ?? null),
+{% endfor %}
+            ],
+        ], $status);
+    }
+{% endif %}
+}

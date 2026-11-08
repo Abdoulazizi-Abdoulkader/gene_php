@@ -1,0 +1,35 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Point d'entrée de gene (Linux, macOS ; sous Windows : gene.cmd ou gene.ps1, à la racine).
+// Sans argument, lance l'assistant ; « gene list » affiche toutes les commandes.
+
+if (PHP_VERSION_ID < 80300) {
+    fwrite(STDERR, 'gene nécessite PHP 8.3 ou plus (version actuelle : ' . PHP_VERSION . ").\n");
+    exit(1);
+}
+
+$projectDir = dirname(__DIR__);
+$autoload = $projectDir . '/vendor/autoload.php';
+if (!is_file($autoload)) {
+    fwrite(STDERR, "Dépendances absentes. Lancez une fois, dans {$projectDir} :\n    composer install\n");
+    exit(1);
+}
+require $autoload;
+
+use Gene\Command;
+use Symfony\Component\Console\Application;
+
+$application = new Application('gene', '2.1.0');
+$application->addCommands([
+    new Command\NewCommand($projectDir),
+    new Command\GenerateCommand($projectDir),
+    new Command\SchemaCommand(),
+    new Command\DoctorCommand($projectDir),
+    new Command\ProfileListCommand(),
+    new Command\ProfileDeleteCommand(),
+]);
+$application->setDefaultCommand('new');
+$application->run();

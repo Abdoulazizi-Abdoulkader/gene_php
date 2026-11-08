@@ -1,0 +1,50 @@
+<?php
+/**
+ * Fiche « {{ t.name|comment }} ». Généré par gene.
+ *
+ * @var App\Framework\View $this
+ * @var App\Entity\{{ t.className }} $item
+ * @var array<string, string|null> $labels libellés des clés étrangères
+ * @var string $path
+ */
+$itemPath = $path . '/' . rawurlencode((string) $item->{{ t.primaryKey.property }});
+$this->title({{ t.title|php }} . ' : ' . (string) ($item->{{ t.labelField.property }} ?? $item->{{ t.primaryKey.property }}));
+?>
+<nav aria-label="Fil d'Ariane">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="<?= $this->e($this->url($path)) ?>">{{ t.title|html }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><?= $this->e($item->{{ t.labelField.property }} ?? $item->{{ t.primaryKey.property }}) ?></li>
+    </ol>
+</nav>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row mb-0 detail-list">
+{% for f in t.readableFields %}
+            <dt class="col-sm-4 col-lg-3">{{ f.label|html }}</dt>
+{% if f.relation %}
+            <dd class="col-sm-8 col-lg-9">
+                <?php if ($item->{{ f.property }} !== null): ?>
+                    <a href="<?= $this->e($this->url({{ ('/' ~ f.relation.slug ~ '/')|php }} . rawurlencode((string) $item->{{ f.property }}))) ?>"><?= $this->e($labels[{{ f.name|php }}] ?? $item->{{ f.property }}) ?></a>
+                <?php else: ?>
+                    <?= $this->display(null, 'string') ?>
+                <?php endif ?>
+            </dd>
+{% elseif f.isLong %}
+            <dd class="col-sm-8 col-lg-9 pre-wrap"><?= $this->display($item->{{ f.property }}, {{ f.kind|php }}) ?></dd>
+{% else %}
+            <dd class="col-sm-8 col-lg-9"><?= $this->display($item->{{ f.property }}, {{ f.kind|php }}) ?></dd>
+{% endif %}
+{% endfor %}
+        </dl>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+    <a class="btn btn-primary" href="<?= $this->e($this->url($itemPath . '/edit')) ?>">Modifier</a>
+    <form method="post" action="<?= $this->e($this->url($itemPath . '/delete')) ?>" data-confirm="Supprimer définitivement cet enregistrement ?">
+        <?= $this->csrfField() ?>
+        <button type="submit" class="btn btn-outline-danger">Supprimer</button>
+    </form>
+    <a class="btn btn-link" href="<?= $this->e($this->url($path)) ?>">Retour à la liste</a>
+</div>

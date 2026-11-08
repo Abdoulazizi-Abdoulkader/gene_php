@@ -1,0 +1,10 @@
+# Déploiement Apache pointant sur la racine du projet : tout est renvoyé vers public/,
+# ce qui rend inaccessibles src/, config/, templates/ et .env.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
+Options -Indexes

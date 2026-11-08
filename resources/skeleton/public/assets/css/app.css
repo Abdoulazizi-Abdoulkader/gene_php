@@ -1,0 +1,9 @@
+/* Styles propres à l'application (les styles en ligne sont bloqués par la politique CSP). */
+.card-link-hover { transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+.card-link-hover:hover, .card-link-hover:focus { border-color: var(--bs-primary); box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .06); }
+.table-actions { width: 1%; white-space: nowrap; }
+.table th a { display: inline-block; }
+.cell-truncate { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-list dt { font-weight: 500; color: var(--bs-secondary-color); }
+.detail-list dd { overflow-wrap: anywhere; }
+.pre-wrap { white-space: pre-wrap; }

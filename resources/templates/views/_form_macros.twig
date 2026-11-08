@@ -1,0 +1,4 @@
+{% macro attrs(f) %}{% if f.isRequired %} required{% endif %}{% endmacro %}
+{% macro feedback(f) %}            <?php if (isset($errors[{{ f.name|php }}])): ?><div class="invalid-feedback"><?= $this->e($errors[{{ f.name|php }}]) ?></div><?php endif ?>{% endmacro %}
+{% macro value(f) %}<?= $this->e($values[{{ f.name|php }}] ?? '') ?>{% endmacro %}
+{% macro cls(f, base) %}{{ base }}<?= isset($errors[{{ f.name|php }}]) ? ' is-invalid' : '' ?>{% endmacro %}
